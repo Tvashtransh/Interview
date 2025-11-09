@@ -1,0 +1,271 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: #f5f5f5;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 1400px;
+}
+
+h1 {
+  margin-bottom: 30px;
+  color: #333;
+  font-size: 2.5rem;
+  text-align: center;
+}
+
+button {
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.start-button {
+  background-color: #4caf50;
+  color: white;
+}
+
+.start-button:hover {
+  background-color: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.stop-button {
+  background-color: #f44336;
+  color: white;
+}
+
+.stop-button:hover {
+  background-color: #da190b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.transcription-box {
+  min-height: 300px;
+  width: 80%;
+  max-width: 600px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 20px;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.transcription-box p {
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.interim {
+  color: #999;
+  font-style: italic;
+}
+
+.placeholder {
+  color: #bbb;
+  font-style: italic;
+}
+
+.error-message {
+  padding: 20px;
+  background-color: #ffebee;
+  border: 1px solid #ef5350;
+  border-radius: 8px;
+  color: #c62828;
+  text-align: center;
+}
+
+.error-message p {
+  margin: 8px 0;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 20px;
+}
+
+.ollama-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.model-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+.model-selector > label {
+  font-weight: 500;
+}
+
+.model-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.model-hint {
+  font-size: 0.75rem;
+  color: #666;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+.model-input {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  width: 120px;
+}
+
+.llm-button {
+  padding: 8px 16px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.llm-button:hover:not(:disabled) {
+  background-color: #1976d2;
+}
+
+.llm-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.transcription-box h2,
+.llm-response-box h2 {
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+  color: #555;
+  border-bottom: 2px solid #4caf50;
+  padding-bottom: 8px;
+}
+
+.llm-response-box h2 {
+  border-bottom-color: #2196f3;
+}
+
+.llm-response-box {
+  min-height: 300px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.llm-text {
+  color: #333;
+  font-size: 1rem;
+  white-space: pre-wrap;
+}
+
+.loading {
+  color: #2196f3;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+@media (max-width: 768px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .ollama-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .model-selector {
+    justify-content: space-between;
+  }
+  
+  .model-input {
+    flex: 1;
+    max-width: 200px;
+  }
+}
+

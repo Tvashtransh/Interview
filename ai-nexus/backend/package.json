@@ -1,0 +1,29 @@
+{
+  "name": "ai-nexus-backend",
+  "version": "1.0.0",
+  "description": "AI-NEXUS Backend API - WebSocket server for live audio streaming and interview management",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "kill-port": "powershell -ExecutionPolicy Bypass -File ./kill-port.ps1",
+    "dev:clean": "npm run kill-port && npm run dev"
+  },
+  "dependencies": {
+    "@deepgram/sdk": "^3.3.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "livekit-server-sdk": "^2.0.0",
+    "mongoose": "^8.0.3",
+    "multer": "^1.4.5-lts.1",
+    "node-fetch": "^3.3.2",
+    "ws": "^8.14.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

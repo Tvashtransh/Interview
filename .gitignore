@@ -1,0 +1,82 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# backend
+/backend/node_modules
+/backend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+
+# ML API
+/ml-api/venv/
+/ml-api/__pycache__/
+/ml-api/.env
+
+# AI Nexus
+/ai-nexus/backend/node_modules/
+/ai-nexus/backend/uploads/
+/ai-nexus/backend/.env
+/ai-nexus/frontend/node_modules/
+/ai-nexus/frontend/.next/
+/ai-nexus/frontend/.env
+/ai-nexus/ml-api/venv/
+/ai-nexus/ml-api/__pycache__/
+
+# Uploads and temporary files
+uploads/
+*.log
+*.zip
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
