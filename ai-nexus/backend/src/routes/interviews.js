@@ -1,5 +1,6 @@
 import express from 'express';
 import multer from 'multer';
+import mongoose from 'mongoose';
 import { Interview } from '../models/Interview.js';
 import { AccessToken } from 'livekit-server-sdk';
 import { authenticateToken } from '../middleware/auth.js';
@@ -189,6 +190,65 @@ router.post('/:interviewId/start', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Start interview error:', error);
     res.status(500).json({ error: 'Failed to start interview' });
+  }
+});
+
+// Save spike interview data (no auth required for spike testing)
+router.post('/spike/save', async (req, res) => {
+  try {
+    const { roomName, transcripts, qaPairs, hrId, candidateId } = req.body;
+
+    if (!roomName || !transcripts) {
+      return res.status(400).json({ error: 'roomName and transcripts are required' });
+    }
+
+    // Create or update interview record
+    const interviewId = `spike-${roomName}-${Date.now()}`;
+    let interview = await Interview.findOne({ livekitRoomName: roomName, status: { $in: ['in-progress', 'completed'] } })
+      .sort({ createdAt: -1 });
+
+    if (!interview) {
+      // Create new interview record for spike
+      interview = new Interview({
+        interviewId,
+        hrId: hrId || new mongoose.Types.ObjectId(), // Use provided ID or create dummy
+        candidateId: candidateId || new mongoose.Types.ObjectId(),
+        scheduledAt: new Date(),
+        livekitRoomName: roomName,
+        status: 'completed',
+        transcripts: transcripts.map(t => ({
+          role: t.role,
+          text: t.text,
+          timestamp: new Date(t.timestamp),
+          isFinal: t.isFinal !== false
+        })),
+        completedAt: new Date()
+      });
+    } else {
+      // Update existing interview
+      interview.transcripts = transcripts.map(t => ({
+        role: t.role,
+        text: t.text,
+        timestamp: new Date(t.timestamp),
+        isFinal: t.isFinal !== false
+      }));
+      interview.status = 'completed';
+      interview.completedAt = new Date();
+    }
+
+    // Store Q&A pairs in a custom field (we'll add this to schema if needed)
+    interview.qaPairs = qaPairs || [];
+
+    await interview.save();
+
+    res.json({ 
+      success: true, 
+      interviewId: interview.interviewId,
+      message: 'Interview data saved successfully' 
+    });
+  } catch (error) {
+    console.error('Save spike interview error:', error);
+    res.status(500).json({ error: 'Failed to save interview data' });
   }
 });
 

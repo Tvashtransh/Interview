@@ -30,7 +30,8 @@ app.use(cors({
       'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:3002',
-      'http://localhost:5173' // Vite default port
+      'http://localhost:5173', // Vite default port
+      'http://localhost:8080' // arc-insight-lab frontend port
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('localhost')) {

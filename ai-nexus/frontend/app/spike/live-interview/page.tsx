@@ -45,6 +45,7 @@ export default function LiveInterviewSpike() {
   const hrQuestionDebounceTimeoutRef = useRef<NodeJS.Timeout | null>(null) // Debounce HR question processing
   const accumulatedTranscriptRef = useRef<string>('') // Accumulate transcripts across multiple onresult events
   const finalTranscriptTimeoutRef = useRef<NodeJS.Timeout | null>(null) // Timeout to process final transcript after speech ends
+  const echoPreventionIntervalRef = useRef<NodeJS.Timeout | null>(null) // Interval to prevent local audio echo
 
   // Initialize Chrome Web Speech API
   useEffect(() => {
@@ -68,7 +69,7 @@ export default function LiveInterviewSpike() {
           speechRecognitionActiveRef.current = true
           // Only update state if it changed to prevent unnecessary re-renders
           if (!speechRecognitionActive) {
-            setSpeechRecognitionActive(true)
+          setSpeechRecognitionActive(true)
           }
         }
 
@@ -121,13 +122,13 @@ export default function LiveInterviewSpike() {
               const completeText = accumulatedTranscriptRef.current.trim()
               
               if (completeText.length > 0) {
-                const transcriptData = {
-                  role,
+            const transcriptData = {
+              role,
                   text: completeText,
-                  timestamp: Date.now(),
-                  isFinal: true
-                }
-                
+              timestamp: Date.now(),
+              isFinal: true
+            }
+            
                 console.log('📝 Complete final transcript:', completeText)
                 console.log('📝 Adding complete transcript to state:', transcriptData)
                 setTranscripts(prev => {
@@ -137,17 +138,17 @@ export default function LiveInterviewSpike() {
                   console.log('📝 Transcripts state updated. Total count:', updated.length)
                   return updated
                 })
-                
-                // Send to backend via WebSocket
-                if (wsRef.current?.readyState === WebSocket.OPEN) {
-                  wsRef.current.send(JSON.stringify({
-                    type: 'transcript',
-                    ...transcriptData
-                  }))
+            
+            // Send to backend via WebSocket
+            if (wsRef.current?.readyState === WebSocket.OPEN) {
+              wsRef.current.send(JSON.stringify({
+                type: 'transcript',
+                ...transcriptData
+              }))
                   console.log('✅ Complete transcript sent to backend')
-                } else {
-                  console.warn('⚠️ WebSocket not open, transcript not sent. State:', wsRef.current?.readyState)
-                }
+            } else {
+              console.warn('⚠️ WebSocket not open, transcript not sent. State:', wsRef.current?.readyState)
+            }
 
                 // Real-time analysis: Process HR questions immediately with complete text
                 if (role === 'hr' && completeText.length > 10) {
@@ -312,11 +313,11 @@ export default function LiveInterviewSpike() {
                     speechRecognitionActiveRef.current = true
                     // Only update state if it changed
                     if (!speechRecognitionActive) {
-                      setSpeechRecognitionActive(true)
-                    }
+                          setSpeechRecognitionActive(true)
+                        }
                     return
                   }
-                } catch (e) {
+                    } catch (e) {
                   // Ignore state check errors
                 }
               }
@@ -335,20 +336,20 @@ export default function LiveInterviewSpike() {
               recognitionRestartTimeoutRef.current = setTimeout(() => {
                 isRestartingRecognitionRef.current = false
                 
-                if (recognitionRef.current && (roomRef.current !== null || token)) {
-                  try {
+                      if (recognitionRef.current && (roomRef.current !== null || token)) {
+                        try {
                     const state = (recognitionRef.current as any).state
                     // Double-check it's actually stopped before restarting
                     if (state === 'idle' || state === 'stopped' || state === undefined) {
-                      recognitionRef.current.start()
+                          recognitionRef.current.start()
                       console.log('🔄 Speech recognition restarted - state:', state, 'after', endCount, 'end events')
                       speechRecognitionActiveRef.current = true
-                      setSpeechRecognitionActive(true)
+                          setSpeechRecognitionActive(true)
                     } else {
                       // Already running, just update state
                       speechRecognitionActiveRef.current = true
                       if (!speechRecognitionActive) {
-                        setSpeechRecognitionActive(true)
+                                setSpeechRecognitionActive(true)
                       }
                     }
                   } catch (e: any) {
@@ -357,12 +358,12 @@ export default function LiveInterviewSpike() {
                       speechRecognitionActiveRef.current = true
                       if (!speechRecognitionActive) {
                         setSpeechRecognitionActive(true)
-                      }
+                              }
                     } else {
                       console.log('⚠️ Restart error:', e.message)
-                    }
                   }
                 }
+              }
               }, 5000) // 5 second delay to prevent rapid switching
             }, 1000) // Wait 1 second first to see if Chrome restarts automatically
           } else {
@@ -419,21 +420,21 @@ export default function LiveInterviewSpike() {
               isRestartingRecognitionRef.current = false
               
               if (recognitionRef.current && (roomRef.current !== null || token)) {
-                try {
-                  recognitionRef.current.start()
-                  setSpeechRecognitionActive(true)
-                  console.log('✅ Health check: Restarted successfully')
-                } catch (startError: any) {
-                  if (startError.message && startError.message.includes('already started')) {
-                    setSpeechRecognitionActive(true)
-                  }
+            try {
+              recognitionRef.current.start()
+              setSpeechRecognitionActive(true)
+              console.log('✅ Health check: Restarted successfully')
+            } catch (startError: any) {
+              if (startError.message && startError.message.includes('already started')) {
+                      setSpeechRecognitionActive(true)
+                    }
                 }
               }
             }, 2000)
           } else if (state === 'listening' || state === 'starting') {
             isRestartingRecognitionRef.current = false
           }
-        } catch (e: any) {
+              } catch (e: any) {
           if (e.message && e.message.includes('already started')) {
             setSpeechRecognitionActive(true)
           }
@@ -514,38 +515,38 @@ export default function LiveInterviewSpike() {
     
     try {
       const ws = new WebSocket(wsUrlFull, []) // Empty protocols array to avoid upgrade issues
-      
-      ws.onopen = () => {
-        console.log('✅ WebSocket connected successfully')
-        setWsConnected(true)
+    
+    ws.onopen = () => {
+      console.log('✅ WebSocket connected successfully')
+      setWsConnected(true)
         wsConnectingRef.current = false
-        // Join interview
-        const joinMessage = {
-          type: 'join',
-          interviewId,
-          role
-        }
-        ws.send(JSON.stringify(joinMessage))
-        console.log('📤 Sent join message:', joinMessage)
+      // Join interview
+      const joinMessage = {
+        type: 'join',
+        interviewId,
+        role
       }
+      ws.send(JSON.stringify(joinMessage))
+      console.log('📤 Sent join message:', joinMessage)
+    }
 
-      ws.onmessage = (event) => {
-        try {
+    ws.onmessage = (event) => {
+      try {
           // Check if message is binary (audio) or text (JSON)
           if (event.data instanceof Blob || event.data instanceof ArrayBuffer) {
             console.log('📨 Received binary message (audio acknowledgment or error)')
             return
           }
           
-          const data = JSON.parse(event.data)
-          console.log('📨 WebSocket message received:', data)
-          
-          if (data.type === 'joined') {
-            console.log(`✅ Successfully joined as ${data.role} for interview ${data.interviewId}`)
-            console.log('🎤 Deepgram transcription is now active - start speaking!')
-          } else if (data.type === 'transcript') {
-            // Received transcript from Deepgram (can be from self or other participant)
-            console.log(`📝 Transcript from ${data.role}:`, data.text, data.isFinal ? '(FINAL)' : '(INTERIM)')
+        const data = JSON.parse(event.data)
+        console.log('📨 WebSocket message received:', data)
+        
+        if (data.type === 'joined') {
+          console.log(`✅ Successfully joined as ${data.role} for interview ${data.interviewId}`)
+          console.log('🎤 Deepgram transcription is now active - start speaking!')
+        } else if (data.type === 'transcript') {
+          // Received transcript from Deepgram (can be from self or other participant)
+          console.log(`📝 Transcript from ${data.role}:`, data.text, data.isFinal ? '(FINAL)' : '(INTERIM)')
             
             if (!data.text || !data.text.trim()) {
               console.warn('⚠️ Received empty transcript, ignoring')
@@ -553,7 +554,7 @@ export default function LiveInterviewSpike() {
             }
             
             const transcriptData = {
-              role: data.role,
+            role: data.role,
               text: data.text.trim(),
               timestamp: data.timestamp || Date.now(),
               isFinal: data.isFinal !== undefined ? data.isFinal : true
@@ -605,8 +606,8 @@ export default function LiveInterviewSpike() {
               console.log('🎓 Candidate FINAL transcript detected, scoring answer...')
               handleCandidateAnswer(data.text.trim(), data.timestamp || Date.now())
             }
-          } else if (data.type === 'error') {
-            console.error('❌ WebSocket error message:', data.message)
+        } else if (data.type === 'error') {
+          console.error('❌ WebSocket error message:', data.message)
             // Only show alert once per unique error message to prevent spam
             const errorKey = `ws-error-${data.message}`
             if (!sessionStorage.getItem(errorKey)) {
@@ -615,25 +616,25 @@ export default function LiveInterviewSpike() {
               console.warn('⚠️ Transcription service unavailable. Using browser speech recognition instead.')
               // Don't show alert - just log it. The status indicator will show the issue.
             }
-          }
-        } catch (error) {
-          console.error('❌ Error parsing WebSocket message:', error)
         }
+      } catch (error) {
+        console.error('❌ Error parsing WebSocket message:', error)
       }
+    }
 
-      ws.onerror = (error) => {
+    ws.onerror = (error) => {
         console.warn('⚠️ WebSocket connection error (this is optional)')
         console.warn('💡 The app will continue using browser speech recognition.')
-        setWsConnected(false)
+      setWsConnected(false)
         wsConnectingRef.current = false
-      }
+    }
 
-      ws.onclose = (event) => {
+    ws.onclose = (event) => {
         wsConnectingRef.current = false
         if (event.code !== 1000) { // 1000 = normal closure
           console.log('🔌 WebSocket closed', event.code, event.reason || 'Connection closed')
         }
-        setWsConnected(false)
+      setWsConnected(false)
         
         // Only attempt to reconnect if we were previously connected and still in interview
         // AND not already attempting to reconnect
@@ -641,13 +642,13 @@ export default function LiveInterviewSpike() {
           console.log('🔄 Attempting to reconnect WebSocket in 5 seconds...')
           reconnectTimeoutRef.current = setTimeout(() => {
             if (connected || token) { // Double-check we still need connection
-              connectWebSocket(interviewId, wsUrl)
+          connectWebSocket(interviewId, wsUrl)
             }
           }, 5000)
-        }
       }
+    }
 
-      wsRef.current = ws
+    wsRef.current = ws
     } catch (error) {
       console.warn('⚠️ Failed to create WebSocket connection:', error)
       console.warn('💡 The app will continue using browser speech recognition only.')
@@ -1025,10 +1026,10 @@ export default function LiveInterviewSpike() {
             // Check if already running
             const state = (recognitionRef.current as any).state
             if (state === 'idle' || state === 'stopped' || state === undefined) {
-              recognitionRef.current.start()
-              console.log('🎙️ Speech recognition started')
+            recognitionRef.current.start()
+            console.log('🎙️ Speech recognition started')
               speechRecognitionActiveRef.current = true
-              setSpeechRecognitionActive(true)
+            setSpeechRecognitionActive(true)
             } else {
               console.log('✅ Speech recognition already running (state:', state, ')')
               speechRecognitionActiveRef.current = true
@@ -1066,8 +1067,8 @@ export default function LiveInterviewSpike() {
       let response
       try {
         response = await fetch(`${API_URL}/api/interviews/spike/token`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ roomName: roomName || 'test-room', role }),
           signal: AbortSignal.timeout(10000) // 10 second timeout
         })
@@ -1184,6 +1185,40 @@ export default function LiveInterviewSpike() {
     const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000'
     console.log(`🔌 Connecting WebSocket to ${WS_URL}...`)
     connectWebSocket('spike-interview-123', WS_URL)
+    
+    // Prevent local audio echo (like Google Meet)
+    // Continuously check and mute any local audio elements
+    if (echoPreventionIntervalRef.current) {
+      clearInterval(echoPreventionIntervalRef.current)
+    }
+    echoPreventionIntervalRef.current = setInterval(() => {
+      if (room.localParticipant) {
+        // Find all audio elements and mute local participant's audio
+        const audioElements = document.querySelectorAll('audio')
+        audioElements.forEach((audio) => {
+          // Check if this audio element is playing local participant's audio
+          // We can't directly check, but we can mute all audio elements that might be local
+          // The VideoConference component should handle this, but we add extra safety
+          const track = (audio as any).srcObject
+          if (track && room.localParticipant.audioTrackPublications.size > 0) {
+            // If it's a MediaStream, check if it contains local audio tracks
+            if (track instanceof MediaStream) {
+              const audioTracks = track.getAudioTracks()
+              audioTracks.forEach((audioTrack) => {
+                // Check if this track belongs to local participant
+                room.localParticipant.audioTrackPublications.forEach((pub) => {
+                  if (pub.track?.mediaStreamTrack === audioTrack) {
+                    // This is local audio - mute it to prevent echo
+                    audio.muted = true
+                    audio.volume = 0
+                  }
+                })
+              })
+            }
+          }
+        })
+      }
+    }, 1000) // Check every second
 
     // Speech recognition should already be started from startRoom
     // Just verify it's running
@@ -1210,18 +1245,160 @@ export default function LiveInterviewSpike() {
       if (room && typeof room.on === 'function') {
         room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
           console.log('🔊 Subscribed to track:', track.kind, 'from', participant.identity)
+          
+          // Prevent local audio playback (echo cancellation)
+          // Don't play your own audio through your speakers - like Google Meet
           if (track.kind === Track.Kind.Audio) {
-            console.log('🔊 Audio track subscribed from', participant.identity)
+            const isLocalParticipant = participant.identity === room.localParticipant?.identity
+            if (isLocalParticipant) {
+              console.log('🔇 Preventing local audio playback to avoid echo (like Google Meet)')
+              // Detach the track immediately to prevent playback
+              // Your voice goes to others but not back to you
+              try {
+                track.detach()
+                console.log('✅ Local audio track detached - no echo!')
+              } catch (e) {
+                // If already attached, find and mute the audio element
+                const audioElements = document.querySelectorAll('audio')
+                audioElements.forEach((audio) => {
+                  if (audio.srcObject === track.mediaStream) {
+                    audio.muted = true
+                    audio.volume = 0
+                    console.log('✅ Local audio element muted')
+                  }
+                })
+              }
+            } else {
+              console.log('🔊 Audio track subscribed from remote participant:', participant.identity)
           }
+          }
+          
           if (track.kind === Track.Kind.Video) {
             console.log('📹 Video track subscribed from', participant.identity)
           }
         })
 
-        // Listen for local tracks (only if localParticipant exists)
+        // Also prevent subscribing to local tracks in the first place
+        room.on(RoomEvent.LocalTrackPublished, (publication, participant) => {
+          if (publication.kind === Track.Kind.Audio) {
+            console.log('🎤 Local audio track published - will not subscribe to prevent echo')
+            // Don't subscribe to your own audio track
+            // This prevents the echo in the first place
+          }
+        })
+
+        // Listen for local tracks and microphone mute/unmute events
         if (room.localParticipant) {
+          // Function to handle microphone mute/unmute
+          const handleMicrophoneMuteChange = (isMuted: boolean) => {
+            console.log(`🎤 Microphone ${isMuted ? 'MUTED' : 'UNMUTED'}`)
+            
+            if (isMuted) {
+              // Stop speech recognition when mic is muted
+              if (recognitionRef.current && speechRecognitionActiveRef.current) {
+                try {
+                  console.log('🛑 Stopping speech recognition (mic muted)')
+                  recognitionRef.current.stop()
+                  speechRecognitionActiveRef.current = false
+                  setSpeechRecognitionActive(false)
+                } catch (e: any) {
+                  console.log('Error stopping speech recognition:', e.message)
+                }
+              }
+            } else {
+              // Restart speech recognition when mic is unmuted
+              if (recognitionRef.current && !speechRecognitionActiveRef.current) {
+                try {
+                  console.log('🎙️ Starting speech recognition (mic unmuted)')
+                  recognitionRef.current.start()
+                  speechRecognitionActiveRef.current = true
+                  setSpeechRecognitionActive(true)
+                } catch (e: any) {
+                  if (e.message && e.message.includes('already started')) {
+                    console.log('✅ Speech recognition already running')
+                    speechRecognitionActiveRef.current = true
+                    setSpeechRecognitionActive(true)
+                  } else {
+                    console.log('Error starting speech recognition:', e.message)
+                  }
+                }
+              }
+            }
+          }
+
+          // Function to check track mute state and set up listeners
+          const setupTrackMuteListener = (publication: any) => {
+            const track = publication.track
+            if (!track) return
+            
+            // Check if it's a local audio track with underlying MediaStreamTrack
+            if (track.mediaStreamTrack) {
+              const mediaTrack = track.mediaStreamTrack
+              console.log('🎤 Setting up mute listener for track:', publication.trackSid, 'Enabled:', mediaTrack.enabled)
+              
+              // Check initial state
+              if (!mediaTrack.enabled || publication.isMuted) {
+                handleMicrophoneMuteChange(true)
+              }
+              
+              // Listen to the MediaStreamTrack's enabled state changes
+              // This is more reliable than LiveKit events
+              const checkMuteState = () => {
+                const isMuted = !mediaTrack.enabled || publication.isMuted
+                const wasMuted = !speechRecognitionActiveRef.current
+                
+                if (isMuted !== wasMuted) {
+                  handleMicrophoneMuteChange(isMuted)
+                }
+              }
+              
+              // Poll for changes (MediaStreamTrack doesn't have events for enabled changes)
+              const muteCheckInterval = setInterval(() => {
+                checkMuteState()
+              }, 500) // Check every 500ms
+              
+              // Store interval for cleanup
+              ;(publication as any)._muteCheckInterval = muteCheckInterval
+              
+              // Also listen to publication mute state if available
+              if (typeof publication.on === 'function') {
+                try {
+                  publication.on('muted', () => {
+                    console.log('🎤 Publication muted event')
+                    handleMicrophoneMuteChange(true)
+                  })
+                  
+                  publication.on('unmuted', () => {
+                    console.log('🎤 Publication unmuted event')
+                    handleMicrophoneMuteChange(false)
+                  })
+                } catch (e) {
+                  // Events might not be available, that's okay
+                }
+              }
+            }
+          }
+
+          // Check existing audio tracks and set up listeners
           room.localParticipant.audioTrackPublications.forEach((publication) => {
-            console.log('🎤 Local audio track:', publication.trackSid)
+            console.log('🎤 Local audio track:', publication.trackSid, 'Muted:', publication.isMuted)
+            setupTrackMuteListener(publication)
+          })
+          
+          // Listen for new audio track publications
+          room.localParticipant.on('localTrackPublished', (publication) => {
+            if (publication.kind === Track.Kind.Audio) {
+              console.log('🎤 New local audio track published:', publication.trackSid, 'Muted:', publication.isMuted)
+              setupTrackMuteListener(publication)
+            }
+          })
+          
+          // Cleanup intervals when tracks are unpublished
+          room.localParticipant.on('localTrackUnpublished', (publication) => {
+            if (publication.kind === Track.Kind.Audio && (publication as any)._muteCheckInterval) {
+              clearInterval((publication as any)._muteCheckInterval)
+              delete (publication as any)._muteCheckInterval
+            }
           })
           
           room.localParticipant.videoTrackPublications.forEach((publication) => {
@@ -1384,14 +1561,34 @@ export default function LiveInterviewSpike() {
   }
 
   // Handle room disconnect
+  // Cleanup function for mute check intervals
+  const cleanupMuteCheckIntervals = () => {
+    if (roomRef.current?.localParticipant) {
+      roomRef.current.localParticipant.audioTrackPublications.forEach((publication) => {
+        if ((publication as any)._muteCheckInterval) {
+          clearInterval((publication as any)._muteCheckInterval)
+          delete (publication as any)._muteCheckInterval
+        }
+      })
+    }
+    // Cleanup echo prevention interval
+    if (echoPreventionIntervalRef.current) {
+      clearInterval(echoPreventionIntervalRef.current)
+      echoPreventionIntervalRef.current = null
+    }
+  }
+
   const handleRoomDisconnected = () => {
     console.log('🔌 Disconnected from LiveKit room')
     setConnected(false)
     
+    // Cleanup mute check intervals
+    cleanupMuteCheckIntervals()
+    
     // Stop speech recognition
     if (recognitionRef.current) {
       try {
-        recognitionRef.current.stop()
+      recognitionRef.current.stop()
       } catch (e) {
         // Ignore
       }
@@ -1400,7 +1597,7 @@ export default function LiveInterviewSpike() {
     // Stop MediaRecorder
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       try {
-        mediaRecorderRef.current.stop()
+      mediaRecorderRef.current.stop()
       } catch (e) {
         // Ignore
       }
@@ -1430,6 +1627,9 @@ export default function LiveInterviewSpike() {
   // End interview
   const endInterview = () => {
     console.log('🛑 Ending interview...')
+    
+    // Cleanup mute check intervals
+    cleanupMuteCheckIntervals()
     
     // Stop speech recognition
     if (recognitionRef.current) {
@@ -1752,6 +1952,8 @@ export default function LiveInterviewSpike() {
                   options={{
                     adaptiveStream: true,
                     dynacast: true,
+                    // Audio settings are configured in getUserMedia (already done above)
+                    // Echo cancellation is handled by detaching local audio tracks
                   }}
                 >
                   <RoomConnectionHandler onConnected={handleRoomConnected} />
@@ -1780,7 +1982,7 @@ export default function LiveInterviewSpike() {
                   <p className="text-slate-400 text-sm">No transcripts yet. Start speaking...</p>
                 ) : (
                   transcripts.map((transcript, idx) => (
-                    <div 
+                    <div
                       key={`${transcript.timestamp}-${idx}-${transcript.role}`} 
                       className={`p-3 rounded-lg text-sm ${
                         transcript.role === 'hr' 

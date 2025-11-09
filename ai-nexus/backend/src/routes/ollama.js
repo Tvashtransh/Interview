@@ -274,5 +274,128 @@ Respond in JSON format:
   }
 });
 
+// Generate AI analysis report for completed interview
+router.post('/generate-report', async (req, res) => {
+  try {
+    const { interviewId, transcripts, qaPairs, jobDescription } = req.body;
+
+    if (!interviewId || !transcripts) {
+      return res.status(400).json({ error: 'interviewId and transcripts are required' });
+    }
+
+    // Get model from env
+    const model = process.env.OLLAMA_MODEL || process.env.OLLAMA_CLOUD_MODEL || 'qwen3-coder:480b-cloud';
+    const isCloudModel = model.includes('-cloud') || model.includes(':cloud');
+    
+    let ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+    if (isCloudModel && (!process.env.OLLAMA_URL || process.env.OLLAMA_URL.includes('localhost'))) {
+      ollamaUrl = process.env.OLLAMA_CLOUD_URL || 'https://ollama.com';
+    }
+    
+    const apiUrl = `${ollamaUrl}/api/generate`;
+    
+    console.log(`🤖 Generating report using Ollama model: ${model} (${isCloudModel ? 'CLOUD' : 'LOCAL'})`);
+
+    // Separate HR and candidate transcripts
+    const hrTranscripts = transcripts.filter(t => t.role === 'hr').map(t => t.text).join(' ');
+    const candidateTranscripts = transcripts.filter(t => t.role === 'candidate').map(t => t.text).join(' ');
+
+    // Calculate overall score from Q&A pairs
+    const scoredPairs = qaPairs.filter(qa => qa.score !== undefined);
+    const overallScore = scoredPairs.length > 0
+      ? Math.round((scoredPairs.reduce((sum, qa) => sum + qa.score, 0) / scoredPairs.length) * 10)
+      : 0;
+
+    // Generate HR summary
+    const hrSummaryPrompt = `You are an expert HR analyst. Analyze this interview transcript and provide a comprehensive summary for HR review.
+
+HR Questions: ${hrTranscripts}
+Candidate Answers: ${candidateTranscripts}
+${jobDescription ? `Job Description: ${jobDescription}` : ''}
+
+Provide a detailed analysis including:
+1. Candidate's strengths
+2. Areas for improvement
+3. Overall assessment
+4. Recommendation (hire/consider/reject)
+
+Summary:`;
+
+    // Generate candidate summary
+    const candidateSummaryPrompt = `You are a helpful career coach. Analyze this interview and provide constructive feedback for the candidate.
+
+Interview Questions: ${hrTranscripts}
+Your Answers: ${candidateTranscripts}
+${jobDescription ? `Job Description: ${jobDescription}` : ''}
+
+Provide encouraging feedback including:
+1. What you did well
+2. Areas to improve
+3. Tips for future interviews
+4. Overall performance assessment
+
+Feedback:`;
+
+    // Make API calls with auth header if needed
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (process.env.OLLAMA_API_KEY) {
+      headers['Authorization'] = `Bearer ${process.env.OLLAMA_API_KEY}`;
+    }
+
+    // Generate both summaries in parallel
+    const [hrSummaryResponse, candidateSummaryResponse] = await Promise.all([
+      fetch(apiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model,
+          prompt: hrSummaryPrompt,
+          stream: false
+        })
+      }),
+      fetch(apiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model,
+          prompt: candidateSummaryPrompt,
+          stream: false
+        })
+      })
+    ]);
+
+    if (!hrSummaryResponse.ok || !candidateSummaryResponse.ok) {
+      throw new Error('Failed to generate summaries');
+    }
+
+    const hrSummaryData = await hrSummaryResponse.json();
+    const candidateSummaryData = await candidateSummaryResponse.json();
+
+    const report = {
+      interviewId,
+      overallScore,
+      aiSummaryHR: hrSummaryData.response || hrSummaryData.text || 'Summary generation failed',
+      aiSummaryCandidate: candidateSummaryData.response || candidateSummaryData.text || 'Summary generation failed',
+      qaBreakdown: qaPairs.map(qa => ({
+        question: qa.question,
+        candidateAnswer: qa.candidateAnswer || '',
+        idealAnswer: qa.idealAnswer || '',
+        score: qa.score || 0,
+        justification: qa.justification || ''
+      })),
+      fullTranscript: transcripts.map(t => `${t.role.toUpperCase()}: ${t.text}`).join('\n\n'),
+      jobDescription: jobDescription || ''
+    };
+
+    res.json({ success: true, report });
+  } catch (error) {
+    console.error('Error generating report:', error);
+    res.status(500).json({ error: 'Failed to generate report: ' + error.message });
+  }
+});
+
 export default router;
 
