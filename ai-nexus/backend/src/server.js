@@ -34,7 +34,10 @@ app.use(cors({
       'http://localhost:8080' // arc-insight-lab frontend port
     ];
     
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('localhost')) {
+    // Allow localhost and any IP-based origin for development
+    if (allowedOrigins.indexOf(origin) !== -1 || 
+        origin.includes('localhost') || 
+        /^http:\/\/\d+\.\d+\.\d+\.\d+:\d+$/.test(origin)) {
       callback(null, true);
     } else {
       callback(null, true); // Allow all for development
